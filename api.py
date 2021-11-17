@@ -19,7 +19,6 @@ def sql_get_query(query):
         cursor.execute(query)
         data = cursor.fetchall()
         cursor.close()
-        cnx.close()
         return data
     except:
         return {"Error": "Error retrieving data from server"}
@@ -30,11 +29,22 @@ def sql_post_query(query):
         cursor.execute(query)
         cnx.commit()
         cursor.close()
-        cnx.close()
+    except:
+        return {"Error": "Error posting data to server"}
+
+def sql_delete_query(query):
+    try:
+        cursor = cnx.cursor()
+        cursor.execute(query)
+        cnx.commit()
+        print(cursor.rowcount, "record(s) deleted")
+        cursor.close()
+        return "Employee record deleted"
     except:
         return {"Error": "Error posting data to server"}
 
 # Post Object classes
+
 class Employee(BaseModel):
     name: str
     position: Optional[str] = None
@@ -51,6 +61,8 @@ app = FastAPI()
 @app.get('/')
 def index():
     return {"data": ""}
+
+# Employees
     
 @app.get('/employees')
 async def employees():
@@ -67,6 +79,13 @@ async def create_employee(employee: Employee):
     data = sql_post_query("INSERT INTO employees (name, position, age) VALUES (%s, %s, %s)" % (employee.name, employee.position, employee.age))
     return data
 
+@app.delete('/employee/{id}')
+async def delete_employee(id: int = Path(..., title="The ID of the item to get")):
+    data = sql_delete_query("DELETE FROM employees WHERE id = %s" % id)
+    return data
+
+# Departments
+
 @app.get('/departments')
 async def departments():
     data = sql_get_query("SELECT * FROM departments")
@@ -80,4 +99,9 @@ async def department(id: int = Path(..., title="The ID of the item to get")):
 @app.post("/department")
 async def create_employee(department: Department):
     data = sql_post_query("INSERT INTO departments (name, location) VALUES (%s, %s)" % (department.name, department.location))
+    return data
+
+@app.delete('/department/{id}')
+async def delete_department(id: int = Path(..., title="The ID of the item to get")):
+    data = sql_delete_query("DELETE FROM departments WHERE id = %s" % id)
     return data
