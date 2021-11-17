@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Path
+from fastapi.responses import JSONResponse
 import mysql.connector
 from pydantic import BaseModel
 from typing import Optional
@@ -29,6 +30,7 @@ def sql_post_query(query):
         cursor.execute(query)
         cnx.commit()
         cursor.close()
+        return "Record added"
     except:
         return {"Error": "Error posting data to server"}
 
@@ -39,9 +41,9 @@ def sql_delete_query(query):
         cnx.commit()
         print(cursor.rowcount, "record(s) deleted")
         cursor.close()
-        return "Employee record deleted"
+        return "Record deleted"
     except:
-        return {"Error": "Error posting data to server"}
+        return {"Error": "Error deleting data on server"}
 
 # Post Object classes
 
@@ -74,7 +76,7 @@ async def employee(id: int = Path(..., title="The ID of the item to get")):
     data = sql_get_query("SELECT * FROM employees LEFT JOIN departments ON employees.location_id=departments.id WHERE employees.id = %s" % id)
     return data
 
-@app.post("/employee")
+@app.post('/employee')
 async def create_employee(employee: Employee):
     data = sql_post_query("INSERT INTO employees (name, position, age) VALUES (%s, %s, %s)" % (employee.name, employee.position, employee.age))
     return data
@@ -96,7 +98,7 @@ async def department(id: int = Path(..., title="The ID of the item to get")):
     data = sql_get_query("SELECT * FROM departments WHERE id = %s" % id)
     return data
 
-@app.post("/department")
+@app.post('/department')
 async def create_employee(department: Department):
     data = sql_post_query("INSERT INTO departments (name, location) VALUES (%s, %s)" % (department.name, department.location))
     return data
