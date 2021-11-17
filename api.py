@@ -3,6 +3,8 @@ import mysql.connector
 from pydantic import BaseModel
 from typing import Optional
 
+# Database connection and functions
+
 cnx = mysql.connector.connect(
   host="localhost",
   user="root",
@@ -26,16 +28,13 @@ def sql_post_query(query):
     try:
         cursor = cnx.cursor()
         cursor.execute(query)
-        id = cursor.lastrowid
         cnx.commit()
         cursor.close()
         cnx.close()
-        return id
     except:
         return {"Error": "Error posting data to server"}
 
-app = FastAPI()
-
+# Post Object classes
 class Employee(BaseModel):
     name: str
     position: Optional[str] = None
@@ -44,6 +43,10 @@ class Employee(BaseModel):
 class Department(BaseModel):
     name: str
     location: Optional[str] = None
+
+# Endpoints
+
+app = FastAPI()
 
 @app.get('/')
 def index():
@@ -56,7 +59,7 @@ async def employees():
 
 @app.get('/employee/{id}')
 async def employee(id: int = Path(..., title="The ID of the item to get")):
-    data = sql_get_query("SELECT * FROM employees WHERE id = %s" % id)
+    data = sql_get_query("SELECT * FROM employees LEFT JOIN departments ON employees.location_id=departments.id WHERE employees.id = %s" % id)
     return data
 
 @app.post("/employee")
